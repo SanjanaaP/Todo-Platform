@@ -1,13 +1,13 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'todo_platform',
-  user: 'postgres',
-  password: 'Sanjana@123',
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  ssl: { rejectUnauthorized: false }
 });
-
 pool.connect((err, client, release) => {
   if (err) {
     console.error('Database connection error:', err.message);
