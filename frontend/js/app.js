@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://todo-platform-4y1n.onrender.com/api';
 
 function getUser() {
   try { return JSON.parse(localStorage.getItem('user')) || null; }
