@@ -45,7 +45,7 @@
   <script>
     if (localStorage.getItem('token')) window.location.href = 'dashboard.html';
 
-    const API = 'http://localhost:5000/api';
+    const API = 'https://todo-platform-4y1n.onrender.com/api';
 
     document.getElementById('login-btn').addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
