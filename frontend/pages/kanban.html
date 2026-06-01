@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Kanban — To-Do-Platform</title>
+
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+
+<body>
+
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+      <div class="page-header">
+
+        <h1 class="page-title">
+          Kanban <span>Board</span>
+        </h1>
+      </div>
+
+      <!-- BOARD -->
+
+      <div
+        id="kanban-board"
+        style="
+          display:flex;
+          gap:20px;
+          width:100%;
+          overflow-x:auto;
+          align-items:flex-start;
+          margin-top:30px;
+          padding-bottom:20px;
+        "
+      >
+
+        <!-- TODO -->
+
+        <div
+          style="
+            flex:1;
+            min-width:300px;
+            background:#1e3a5f;
+            border-radius:18px;
+            padding:16px;
+            min-height:500px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              margin-bottom:18px;
+            "
+          >
+
+            <h2 style="color:#38bdf8;">To Do</h2>
+
+            <span
+              id="count-todo"
+              style="
+                background:#1f2937;
+                padding:4px 12px;
+                border-radius:20px;
+              "
+            >
+              0
+            </span>
+
+          </div>
+
+          <div id="col-todo"></div>
+
+        </div>
+
+        <!-- IN PROGRESS -->
+
+        <div
+          style="
+            flex:1;
+            min-width:300px;
+            background:#1e3a5f;
+            border-radius:18px;
+            padding:16px;
+            min-height:500px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              margin-bottom:18px;
+            "
+          >
+
+            <h2 style="color:#facc15;">In Progress</h2>
+
+            <span
+              id="count-in_progress"
+              style="
+                background:#1f2937;
+                padding:4px 12px;
+                border-radius:20px;
+              "
+            >
+              0
+            </span>
+
+          </div>
+
+          <div id="col-in_progress"></div>
+
+        </div>
+
+        <!-- COMPLETED -->
+
+        <div
+          style="
+            flex:1;
+            min-width:300px;
+            background:#1e3a5f;
+            border-radius:18px;
+            padding:16px;
+            min-height:500px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              margin-bottom:18px;
+            "
+          >
+
+            <h2 style="color:#22c55e;">Completed</h2>
+
+            <span
+              id="count-completed"
+              style="
+                background:#1f2937;
+                padding:4px 12px;
+                border-radius:20px;
+              "
+            >
+              0
+            </span>
+
+          </div>
+
+          <div id="col-completed"></div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/app.js"></script>
+
+  <script>
+
+    requireAuth();
+
+    renderSidebar('kanban');
+
+    async function loadKanban() {
+
+      try {
+
+        console.log("Loading kanban...");
+
+        const token = getToken();
+
+        const response = await fetch(
+          'http://127.0.0.1:5000/api/tasks',
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        console.log(data);
+
+        const tasks = data.tasks || [];
+
+        const grouped = {
+          todo: [],
+          in_progress: [],
+          completed: []
+        };
+
+        tasks.forEach(task => {
+
+          if (grouped[task.status]) {
+
+            grouped[task.status].push(task);
+
+          }
+
+        });
+
+        ['todo', 'in_progress', 'completed'].forEach(status => {
+
+          const column =
+            document.getElementById('col-' + status);
+
+          const count =
+            document.getElementById('count-' + status);
+
+          const items = grouped[status];
+
+          count.textContent = items.length;
+
+          if (items.length === 0) {
+
+            column.innerHTML = `
+              <p
+                style="
+                  color:#94a3b8;
+                  text-align:center;
+                  padding:20px;
+                "
+              >
+                No tasks
+              </p>
+            `;
+
+            return;
+
+          }
+
+          let html = '';
+
+          items.forEach(task => {
+
+            const overdue =
+              task.due_date &&
+              new Date(task.due_date) < new Date() &&
+              task.status !== 'completed';
+
+            let priorityColor = '#22c55e';
+
+            if (task.priority === 'high') {
+              priorityColor = '#ef4444';
+            }
+
+            if (task.priority === 'medium') {
+              priorityColor = '#f59e0b';
+            }
+
+            html += `
+
+              <div
+                style="
+                  background:#1f2937;
+                  border:1px solid #374151;
+                  border-radius:14px;
+                  padding:14px;
+                  margin-bottom:14px;
+                  color:white;
+                "
+              >
+
+                <div
+                  style="
+                    font-size:1rem;
+                    font-weight:600;
+                    margin-bottom:10px;
+                  "
+                >
+                  ${task.title}
+                </div>
+
+                <div style="margin-bottom:10px;">
+
+                  <span
+                    style="
+                      background:${priorityColor};
+                      padding:4px 10px;
+                      border-radius:20px;
+                      font-size:0.75rem;
+                    "
+                  >
+                    ${task.priority}
+                  </span>
+
+                </div>
+
+                <div
+                  style="
+                    color:#94a3b8;
+                    font-size:0.8rem;
+                  "
+                >
+
+                  ${
+                    task.due_date
+                      ? new Date(task.due_date).toLocaleDateString()
+                      : 'No Due Date'
+                  }
+
+                  ${
+                    overdue
+                      ? ' • Overdue'
+                      : ''
+                  }
+
+                </div>
+
+                ${
+                  task.assignee_name
+                    ? `
+                      <div
+                        style="
+                          margin-top:10px;
+                          font-size:0.75rem;
+                          color:#cbd5e1;
+                        "
+                      >
+                        Assigned: ${task.assignee_name}
+                      </div>
+                    `
+                    : ''
+                }
+
+              </div>
+
+            `;
+
+          });
+
+          column.innerHTML = html;
+
+        });
+
+      } catch (error) {
+
+        console.error(error);
+
+        showToast('Failed to load kanban', 'error');
+
+      }
+
+    }
+
+    loadKanban();
+
+  </script>
+
+</body>
+
+</html>

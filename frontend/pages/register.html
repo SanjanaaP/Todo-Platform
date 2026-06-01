@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — To-Do-Platform</title>
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-left">
+      <div class="auth-brand">To-Do-Platform</div>
+      <div class="auth-tagline">Get started<br>in seconds.</div>
+      <p class="auth-desc">Join your team and start managing tasks with collaboration, kanban boards, and role-based access.</p>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-form-box">
+        <h1 class="auth-form-title">Create account</h1>
+        <p class="auth-form-sub">Start managing tasks with your team</p>
+
+        <div id="error-msg" class="hidden" style="background:rgba(255,77,109,0.1);border:1px solid var(--danger);border-radius:8px;padding:12px 16px;font-size:0.85rem;color:var(--danger);margin-bottom:20px;"></div>
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" placeholder="John Doe" />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Min 8 chars, uppercase, number, special" />
+        </div>
+
+        <button class="btn btn-primary" id="register-btn" style="width:100%;justify-content:center;margin-top:8px;">
+          Create Account
+        </button>
+
+        <p class="auth-switch">Already have an account? <a href="login.html">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('token')) window.location.href = 'dashboard.html';
+    const API = 'http://localhost:5000/api';
+
+    document.getElementById('register-btn').addEventListener('click', async () => {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errEl = document.getElementById('error-msg');
+      const btn = document.getElementById('register-btn');
+
+      errEl.classList.add('hidden');
+      btn.textContent = 'Creating account...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = 'dashboard.html';
+        } else {
+          const msg = data.errors ? data.errors.map(e => e.message).join(', ') : data.message;
+          errEl.textContent = msg || 'Registration failed.';
+          errEl.classList.remove('hidden');
+        }
+      } catch (e) {
+        errEl.textContent = 'Could not connect to server.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
